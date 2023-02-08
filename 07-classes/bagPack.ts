@@ -8,32 +8,18 @@ class MaxBagsReachedException extends Error {
 }
 
 interface IContainer {
-  items: [];
-  add: (item: any) => void;
+  add: (item: Item) => void | never;
   getCapacity: () => number;
 }
 
-interface IItem {
-  name: string;
-  category: string;
-  toString: () => string;
-}
-
-interface IPlayer {
-  bag: Container;
-  bags: Container[];
-  pickItem: (item: Item) => void;
-  storeInNextAvailableBag: (item: Item) => void | never;
-}
-
 class Container implements IContainer {
-  public items: [];
+  public items: Item[];
 
   constructor() {
     this.items = [];
   }
 
-  add(item: Item) {
+  add(item: Item): void | never {
     if (this.items.length >= this.getCapacity()) {
       throw new MaxBagsReachedException();
     }
@@ -41,7 +27,7 @@ class Container implements IContainer {
     this.items.push(item);
   }
 
-  getCapacity() {
+  getCapacity(): number {
     return 0;
   }
 }
@@ -58,30 +44,39 @@ class Bag extends Container {
   }
 }
 
+interface IItem {
+  toString: () => string;
+}
+
 class Item implements IItem {
-  public name: string;
-  public category: string;
+  private name: string;
+  private category: string;
 
   constructor(name: string, category: string) {
     this.name = name;
     this.category = category;
   }
 
-  toString() {
+  toString(): string {
     return `Item with name ${this.name} has category ${this.category}`;
   }
 }
 
-class Player implements IPlayer {
-  public bag: Container;
-  public bags: Container[];
+interface IPlayer {
+  pickItem: (item: Item) => void;
+  storeInNextAvailableBag: (item: Item) => void | never;
+}
 
-  constructor(bag: Container, bags: Container[]) {
+class Player implements IPlayer {
+  private bag: IContainer;
+  private bags: IContainer[];
+
+  constructor(bag: IContainer, bags: IContainer[]) {
     this.bag = bag;
     this.bags = bags;
   }
 
-  pickItem(item: Item) {
+  pickItem(item: Item): void {
     try {
       this.bag.add(item);
       console.log(`${item.toString()} collected ON BAGPACK`);
@@ -91,8 +86,7 @@ class Player implements IPlayer {
       }
     }
   }
-
-  storeInNextAvailableBag(item: Item) {
+  storeInNextAvailableBag(item: Item): void | never {
     for (let index = 0; index < this.bags.length; index++) {
       const bag = this.bags[index];
       try {
